@@ -52,17 +52,21 @@ module.exports = function(ns, options) {
         return selectorMatchesTests(selector, options.not, false);
     }
 
+    function reworkRule(rule) {
+      if (rule.rules) rule.rules.forEach(reworkRule);
+
+      if (rule.selectors) {
+          rule.selectors = rule.selectors.map(function(selector) {
+              if (shouldIgnoreSelector(selector) || !shouldIncludeSelector(selector)) return selector;
+              return selector.replace(/\./g, '.' + ns + '-');
+          });
+      }
+    }
+
     return function(style) {
         // Do nothing if namespace was not specified
         if (!ns || ns === '') return;
-
-        style.rules = style.rules.map(function(rule) {
-            if (!rule.selectors) return rule;
-            rule.selectors = rule.selectors.map(function(selector) {
-                if (shouldIgnoreSelector(selector) || !shouldIncludeSelector(selector)) return selector;
-                return selector.replace(/\./g, '.' + ns + '-');
-            });
-            return rule;
-        });
+          
+        style.rules.forEach(reworkRule);
     };
 };
